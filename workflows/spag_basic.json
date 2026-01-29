@@ -1,17 +1,17 @@
 {
-  "id": "spag-basic-workflow",
+  "id": "spag-any-depth",
   "revision": 0,
   "nodes": [
     {
-      "id": 2,
-      "type": "LoadSharpModel",
+      "id": 1,
+      "type": "LoadImage",
       "pos": [
-        -150,
-        -400
+        -200,
+        100
       ],
       "size": [
-        270,
-        106
+        274,
+        314
       ],
       "flags": {},
       "order": 0,
@@ -19,42 +19,11 @@
       "inputs": [],
       "outputs": [
         {
-          "name": "model",
-          "type": "SHARP_MODEL",
-          "links": [
-            6
-          ]
-        }
-      ],
-      "properties": {
-        "Node name for S&R": "LoadSharpModel"
-      },
-      "widgets_values": [
-        "auto",
-        ""
-      ]
-    },
-    {
-      "id": 1,
-      "type": "LoadImage",
-      "pos": [
-        -150,
-        -100
-      ],
-      "size": [
-        274,
-        314
-      ],
-      "flags": {},
-      "order": 1,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            7
+            1,
+            2
           ]
         },
         {
@@ -67,34 +36,86 @@
         "Node name for S&R": "LoadImage"
       },
       "widgets_values": [
-        "beach.jpg",
+        "panorama.jpg",
         "image"
+      ],
+      "title": "360 Panorama"
+    },
+    {
+      "id": 2,
+      "type": "Note",
+      "pos": [
+        100,
+        -100
+      ],
+      "size": [
+        400,
+        120
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "properties": {},
+      "widgets_values": [
+        "Connect ANY depth estimator here!\n\nOptions:\n- MTB DepthAnything\n- ComfyUI-DepthAnythingV2\n- Marigold\n- Any depth map image"
       ]
     },
     {
-      "id": 5,
-      "type": "SPAGPredict",
+      "id": 3,
+      "type": "LoadSharpModel",
       "pos": [
-        180,
-        -250
+        100,
+        50
       ],
       "size": [
-        300,
-        150
+        270,
+        106
       ],
       "flags": {},
       "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "model",
+          "type": "SHARP_MODEL",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "LoadSharpModel"
+      },
+      "widgets_values": [
+        "auto",
+        ""
+      ]
+    },
+    {
+      "id": 4,
+      "type": "SPAGPredict",
+      "pos": [
+        450,
+        50
+      ],
+      "size": [
+        320,
+        450
+      ],
+      "flags": {},
+      "order": 3,
       "mode": 0,
       "inputs": [
         {
           "name": "model",
           "type": "SHARP_MODEL",
-          "link": 6
+          "link": 3
         },
         {
           "name": "image",
           "type": "IMAGE",
-          "link": 7
+          "link": 1
         },
         {
           "name": "depth_map",
@@ -107,21 +128,21 @@
           "name": "ply_path",
           "type": "STRING",
           "links": [
-            8
+            4
           ]
         },
         {
           "name": "extrinsics",
           "type": "EXTRINSICS",
           "links": [
-            9
+            5
           ]
         },
         {
           "name": "intrinsics",
           "type": "INTRINSICS",
           "links": [
-            10
+            6
           ]
         }
       ],
@@ -129,7 +150,7 @@
         "Node name for S&R": "SPAGPredict"
       },
       "widgets_values": [
-        1.0,
+        10.0,
         0.0,
         false,
         false,
@@ -138,39 +159,40 @@
         true,
         0.85,
         0.15,
-        0.0,
+        3.0,
         "spag_360"
-      ]
+      ],
+      "title": "SPAG (Connect depth_map for better results)"
     },
     {
-      "id": 4,
+      "id": 5,
       "type": "GeomPackPreviewGaussian",
       "pos": [
-        630,
-        -320
+        850,
+        0
       ],
       "size": [
         512,
         658
       ],
       "flags": {},
-      "order": 3,
+      "order": 4,
       "mode": 0,
       "inputs": [
         {
           "name": "ply_path",
           "type": "STRING",
-          "link": 8
+          "link": 4
         },
         {
           "name": "extrinsics",
           "type": "EXTRINSICS",
-          "link": 9
+          "link": 5
         },
         {
           "name": "intrinsics",
           "type": "INTRINSICS",
-          "link": 10
+          "link": 6
         }
       ],
       "outputs": [],
@@ -184,42 +206,42 @@
   ],
   "links": [
     [
-      6,
-      2,
-      0,
-      5,
-      0,
-      "SHARP_MODEL"
-    ],
-    [
-      7,
+      1,
       1,
       0,
-      5,
+      4,
       1,
       "IMAGE"
     ],
     [
-      8,
-      5,
+      3,
+      3,
       0,
       4,
+      0,
+      "SHARP_MODEL"
+    ],
+    [
+      4,
+      4,
+      0,
+      5,
       0,
       "STRING"
     ],
     [
-      9,
       5,
-      1,
       4,
+      1,
+      5,
       1,
       "EXTRINSICS"
     ],
     [
-      10,
-      5,
-      2,
+      6,
       4,
+      2,
+      5,
       2,
       "INTRINSICS"
     ]

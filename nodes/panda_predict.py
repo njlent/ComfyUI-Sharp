@@ -93,7 +93,16 @@ class PanDAPredict:
             
             # Run inference
             output = panda_model(img_tensor)
-            depth = output["pred_depth"] if isinstance(output, dict) else output
+            
+            # Debug: print output structure
+            if isinstance(output, dict):
+                print(f"[PanDA] Output keys: {output.keys()}")
+                depth = output["pred_depth"]
+            else:
+                print(f"[PanDA] Output type: {type(output)}, shape: {output.shape if hasattr(output, 'shape') else 'N/A'}")
+                depth = output
+            
+            print(f"[PanDA] Raw depth shape: {depth.shape}, min: {depth.min().item():.4f}, max: {depth.max().item():.4f}")
             
             # Handle different output formats
             if depth.dim() == 4:
@@ -109,6 +118,8 @@ class PanDAPredict:
                 align_corners=True
             )[0, 0]
             
+            print(f"[PanDA] Resized depth min: {depth.min().item():.4f}, max: {depth.max().item():.4f}")
+            
             # Normalize to 0-1 if requested
             if normalize_output:
                 depth_min = depth.min()
@@ -116,7 +127,7 @@ class PanDAPredict:
                 if depth_max > depth_min:
                     depth = (depth - depth_min) / (depth_max - depth_min)
                 else:
-                    depth = depth - depth_min
+                    depth = torch.zeros_like(depth)
             
             # Convert to 3-channel grayscale for ComfyUI IMAGE format
             depth_3ch = depth.unsqueeze(-1).expand(-1, -1, 3)
@@ -125,7 +136,7 @@ class PanDAPredict:
         # Stack batch
         result = torch.stack(depth_maps, dim=0).cpu()
         
-        print(f"[PanDA] Depth estimation complete. Output shape: {result.shape}")
+        print(f"[PanDA] Depth estimation complete. Output shape: {result.shape}, range: [{result.min():.4f}, {result.max():.4f}]")
         
         return (result,)
 

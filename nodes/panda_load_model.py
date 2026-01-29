@@ -46,24 +46,6 @@ MODEL_CONFIGS = {
 HF_REPO_ID = "ZidongC/PanDA"
 
 
-class DepthAnythingWrapper(nn.Module):
-    """Wrapper to handle different DepthAnythingV2 API versions."""
-    
-    def __init__(self, model, needs_max_depth_forward=False, max_depth=1.0):
-        super().__init__()
-        self.model = model
-        self.needs_max_depth_forward = needs_max_depth_forward
-        self.max_depth = max_depth
-    
-    def forward(self, x):
-        # Always try with max_depth first (metric depth variant)
-        try:
-            return self.model(x, self.max_depth)
-        except TypeError:
-            # Standard DAv2 doesn't need max_depth
-            return self.model(x)
-
-
 class LoadPanDAModel:
     """Load PanDA model for 360 depth estimation."""
 
@@ -133,27 +115,20 @@ class LoadPanDAModel:
                 "pip install git+https://github.com/DepthAnything/Depth-Anything-V2.git"
             )
         
-        # Create model - detect API version
-        print(f"[PanDA] Loading {model_size} model...")
-        needs_max_depth_forward = False
+        # Import our PanDA model wrapper
+        from ..panda.model import create_panda_model
         
-        try:
-            # Try metric depth variant (has max_depth in __init__)
-            model = DepthAnythingV2(
-                encoder=config["encoder"],
-                features=config["features"],
-                out_channels=config["out_channels"],
-                max_depth=1.0,
-            )
-            # If init succeeded with max_depth, forward likely needs it too
-            needs_max_depth_forward = True
-        except TypeError:
-            # Standard DAv2 doesn't have max_depth in init
-            model = DepthAnythingV2(
-                encoder=config["encoder"],
-                features=config["features"],
-                out_channels=config["out_channels"],
-            )
+        # Create PanDA model with LoRA
+        print(f"[PanDA] Creating {model_size} model with LoRA...")
+        model = create_panda_model(
+            DepthAnythingV2,
+            encoder=config["encoder"],
+            features=config["features"],
+            out_channels=config["out_channels"],
+            max_depth=1.0,
+            lora=True,
+            lora_rank=4,
+        )
         
         # Load weights
         model_dict = torch.load(model_path, map_location=device, weights_only=False)
@@ -162,23 +137,22 @@ class LoadPanDAModel:
         if any(key.startswith('module.') for key in model_dict.keys()):
             model_dict = {k.replace('module.', ''): v for k, v in model_dict.items()}
         
-        # Handle 'core.' prefix from PanDA wrapper
-        if any(key.startswith('core.') for key in model_dict.keys()):
-            model_dict = {k.replace('core.', ''): v for k, v in model_dict.items()}
+        # Load state dict with partial matching (some keys may not match due to LoRA differences)
+        model_state = model.state_dict()
+        matched_keys = 0
+        for k, v in model_dict.items():
+            if k in model_state and model_state[k].shape == v.shape:
+                model_state[k] = v
+                matched_keys += 1
         
-        model.load_state_dict(model_dict, strict=False)
+        model.load_state_dict(model_state, strict=False)
         model.to(device)
         model.eval()
         
-        # Wrap model to handle forward() API differences
-        wrapped_model = DepthAnythingWrapper(model, needs_max_depth_forward=needs_max_depth_forward)
-        wrapped_model.to(device)
-        wrapped_model.eval()
-        
-        print(f"[PanDA] Model loaded successfully on {device} (max_depth_forward={needs_max_depth_forward})")
+        print(f"[PanDA] Model loaded successfully on {device} (matched {matched_keys} keys)")
         
         return ({
-            "model": wrapped_model,
+            "model": model,
             "device": device,
             "config": config,
             "model_size": model_size,
@@ -192,4 +166,5 @@ NODE_CLASS_MAPPINGS = {
 NODE_DISPLAY_NAME_MAPPINGS = {
     "LoadPanDAModel": "Load PanDA Model (360 Depth)",
 }
+
 
