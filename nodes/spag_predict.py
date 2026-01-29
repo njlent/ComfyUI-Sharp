@@ -34,6 +34,20 @@ class SPAGPredict:
                 "depth_map": ("IMAGE", {
                     "tooltip": "Optional external depth map (must match image dimensions). If provided, SHARP depth prediction is skipped."
                 }),
+                "depth_scale": ("FLOAT", {
+                    "default": 1.0,
+                    "min": 0.01,
+                    "max": 100.0,
+                    "step": 0.01,
+                    "tooltip": "Scale factor for depth values. Increase if scene looks too small/tight."
+                }),
+                "depth_offset": ("FLOAT", {
+                    "default": 0.0,
+                    "min": -10.0,
+                    "max": 10.0,
+                    "step": 0.1,
+                    "tooltip": "Offset added to depth values."
+                }),
                 "base_scale": ("FLOAT", {
                     "default": 0.01,
                     "min": 0.001,
@@ -79,6 +93,8 @@ class SPAGPredict:
         model: dict,
         image: torch.Tensor,
         depth_map: torch.Tensor = None,
+        depth_scale: float = 1.0,
+        depth_offset: float = 0.0,
         base_scale: float = 0.01,
         use_pole_reconstruction: bool = True,
         floor_threshold: float = 0.85,
@@ -130,7 +146,11 @@ class SPAGPredict:
             if depth_map is not None:
                 print(f"[SPAG] Using provided depth map for image {i+1}...")
                 depth_t = depth_map[i:i+1, ..., 0].to(device) # [1, H, W]
-                # Avoid zero depth
+                
+                # Apply scale and offset
+                depth_t = depth_t * depth_scale + depth_offset
+                
+                # Avoid zero/negative depth which would cause collapse to origin
                 depth_t = torch.maximum(depth_t, torch.tensor(0.1, device=device))
                 H, W = single_image.shape[1], single_image.shape[2]
                 dummy_f_px = max(H, W)

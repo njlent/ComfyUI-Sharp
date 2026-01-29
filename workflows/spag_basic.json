@@ -5,8 +5,14 @@
     {
       "id": 2,
       "type": "LoadSharpModel",
-      "pos": [-150, -400],
-      "size": [270, 106],
+      "pos": [
+        -150,
+        -400
+      ],
+      "size": [
+        270,
+        106
+      ],
       "flags": {},
       "order": 0,
       "mode": 0,
@@ -15,19 +21,30 @@
         {
           "name": "model",
           "type": "SHARP_MODEL",
-          "links": [6]
+          "links": [
+            6
+          ]
         }
       ],
       "properties": {
         "Node name for S&R": "LoadSharpModel"
       },
-      "widgets_values": ["auto", ""]
+      "widgets_values": [
+        "auto",
+        ""
+      ]
     },
     {
       "id": 1,
       "type": "LoadImage",
-      "pos": [-150, -100],
-      "size": [274, 314],
+      "pos": [
+        -150,
+        -100
+      ],
+      "size": [
+        274,
+        314
+      ],
       "flags": {},
       "order": 1,
       "mode": 0,
@@ -36,7 +53,9 @@
         {
           "name": "IMAGE",
           "type": "IMAGE",
-          "links": [7]
+          "links": [
+            7
+          ]
         },
         {
           "name": "MASK",
@@ -47,13 +66,22 @@
       "properties": {
         "Node name for S&R": "LoadImage"
       },
-      "widgets_values": ["beach.jpg", "image"]
+      "widgets_values": [
+        "beach.jpg",
+        "image"
+      ]
     },
     {
       "id": 5,
       "type": "SPAGPredict",
-      "pos": [180, -250],
-      "size": [300, 150],
+      "pos": [
+        180,
+        -250
+      ],
+      "size": [
+        300,
+        150
+      ],
       "flags": {},
       "order": 2,
       "mode": 0,
@@ -78,23 +106,31 @@
         {
           "name": "ply_path",
           "type": "STRING",
-          "links": [8]
+          "links": [
+            8
+          ]
         },
         {
           "name": "extrinsics",
           "type": "EXTRINSICS",
-          "links": [9]
+          "links": [
+            9
+          ]
         },
         {
           "name": "intrinsics",
           "type": "INTRINSICS",
-          "links": [10]
+          "links": [
+            10
+          ]
         }
       ],
       "properties": {
         "Node name for S&R": "SPAGPredict"
       },
       "widgets_values": [
+        1.0,
+        0.0,
         0.01,
         true,
         0.85,
@@ -105,8 +141,14 @@
     {
       "id": 4,
       "type": "GeomPackPreviewGaussian",
-      "pos": [630, -320],
-      "size": [512, 658],
+      "pos": [
+        630,
+        -320
+      ],
+      "size": [
+        512,
+        658
+      ],
       "flags": {},
       "order": 3,
       "mode": 0,
@@ -131,15 +173,52 @@
       "properties": {
         "Node name for S&R": "GeomPackPreviewGaussian"
       },
-      "widgets_values": [""]
+      "widgets_values": [
+        ""
+      ]
     }
   ],
   "links": [
-    [6, 2, 0, 5, 0, "SHARP_MODEL"],
-    [7, 1, 0, 5, 1, "IMAGE"],
-    [8, 5, 0, 4, 0, "STRING"],
-    [9, 5, 1, 4, 1, "EXTRINSICS"],
-    [10, 5, 2, 4, 2, "INTRINSICS"]
+    [
+      6,
+      2,
+      0,
+      5,
+      0,
+      "SHARP_MODEL"
+    ],
+    [
+      7,
+      1,
+      0,
+      5,
+      1,
+      "IMAGE"
+    ],
+    [
+      8,
+      5,
+      0,
+      4,
+      0,
+      "STRING"
+    ],
+    [
+      9,
+      5,
+      1,
+      4,
+      1,
+      "EXTRINSICS"
+    ],
+    [
+      10,
+      5,
+      2,
+      4,
+      2,
+      "INTRINSICS"
+    ]
   ],
   "groups": [],
   "config": {},

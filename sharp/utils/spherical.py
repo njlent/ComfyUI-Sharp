@@ -15,7 +15,7 @@ def pixel_to_spherical(u: torch.Tensor, v: torch.Tensor) -> Tuple[torch.Tensor, 
         theta: Azimuth angle in radians [0, 2pi]
         phi: Elevation angle in radians [0, pi]
     """
-    theta = (1.0 - u) * 2.0 * np.pi
+    theta = (u - 0.5) * 2.0 * np.pi
     phi = v * np.pi
     return theta, phi
 
