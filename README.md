@@ -26,6 +26,7 @@ Model auto-downloads on first run. For offline use, place `sharp_2572gikvuh.pt` 
 
 - **Load SHARP Model** - (down)Load the SHARP model
 - **SHARP Predict** - Generate 3D Gaussians from a single image
+- **SPAG Predict** - Generate 360° 3D Gaussians from an equirectangular panorama
 - **Load Image with EXIF** - Load image and auto-extract focal length from EXIF (35mm equivalent)
 
 Images with EXIF data get focal length auto-calculated when using the Load Image with EXIF node.
