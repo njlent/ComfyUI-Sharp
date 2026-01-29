@@ -48,6 +48,14 @@ class SPAGPredict:
                     "step": 0.1,
                     "tooltip": "Offset added to depth values."
                 }),
+                "invert_depth": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "Invert depth values (1/depth). Use if the depth map interprets white as 'near' (disparity)."
+                }),
+                "flip_x": ("BOOLEAN", {
+                    "default": False,
+                    "tooltip": "Flip the image horizontally (mirror)."
+                }),
                 "base_scale": ("FLOAT", {
                     "default": 0.01,
                     "min": 0.001,
@@ -95,6 +103,8 @@ class SPAGPredict:
         depth_map: torch.Tensor = None,
         depth_scale: float = 1.0,
         depth_offset: float = 0.0,
+        invert_depth: bool = False,
+        flip_x: bool = False,
         base_scale: float = 0.01,
         use_pole_reconstruction: bool = True,
         floor_threshold: float = 0.85,
@@ -146,6 +156,11 @@ class SPAGPredict:
             if depth_map is not None:
                 print(f"[SPAG] Using provided depth map for image {i+1}...")
                 depth_t = depth_map[i:i+1, ..., 0].to(device) # [1, H, W]
+                
+                # Invert depth if requested (Disparity -> Depth)
+                if invert_depth:
+                    # Avoid division by zero
+                    depth_t = 1.0 / (depth_t + 1e-6)
                 
                 # Apply scale and offset
                 depth_t = depth_t * depth_scale + depth_offset
@@ -216,6 +231,10 @@ class SPAGPredict:
             
             # 1. Pixel coordinates
             u, v = get_pixel_grid(H, W, device) # [H, W]
+            
+            # Flip X if requested
+            if flip_x:
+                u = 1.0 - u
             
             # 2. Spherical coordinates
             theta, phi = pixel_to_spherical(u, v) # [H, W]

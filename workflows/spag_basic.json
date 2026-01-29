@@ -131,6 +131,8 @@
       "widgets_values": [
         1.0,
         0.0,
+        false,
+        false,
         0.01,
         true,
         0.85,
