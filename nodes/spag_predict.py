@@ -15,7 +15,7 @@ try:
 except ImportError:
     OUTPUT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "output")
 
-from sharp.utils.image import comfy_to_numpy_rgb
+from ..utils.image import comfy_to_numpy_rgb
 from sharp.utils.spherical import pixel_to_spherical, spherical_to_direction, latitude_scale_factor, get_pixel_grid
 from sharp.utils.gaussians import Gaussians3D, save_ply
 from sharp.utils import color_space as cs_utils
