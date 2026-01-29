@@ -97,26 +97,41 @@ class LoadPanDAModel:
             print(f"[PanDA] Using cached model: {model_path}")
         
         # Import DepthAnythingV2 - try multiple locations
+        DepthAnythingV2 = None
         try:
             from depth_anything_v2.dpt import DepthAnythingV2
         except ImportError:
+            pass
+        
+        if DepthAnythingV2 is None:
             try:
                 from depth_anything_v2_metric.depth_anything_v2.dpt import DepthAnythingV2
             except ImportError:
-                # Create a minimal DepthAnythingV2 implementation
-                raise ImportError(
-                    "DepthAnythingV2 not found. Please install depth-anything-v2 or ensure it's in your path. "
-                    "You can install it with: pip install depth-anything-v2"
-                )
+                pass
         
-        # Create model
+        if DepthAnythingV2 is None:
+            raise ImportError(
+                "DepthAnythingV2 not found. Please install depth-anything-v2: "
+                "pip install git+https://github.com/DepthAnything/Depth-Anything-V2.git"
+            )
+        
+        # Create model - try with and without max_depth parameter
         print(f"[PanDA] Loading {model_size} model...")
-        model = DepthAnythingV2(
-            encoder=config["encoder"],
-            features=config["features"],
-            out_channels=config["out_channels"],
-            max_depth=1.0,
-        )
+        try:
+            # Metric depth variant has max_depth
+            model = DepthAnythingV2(
+                encoder=config["encoder"],
+                features=config["features"],
+                out_channels=config["out_channels"],
+                max_depth=1.0,
+            )
+        except TypeError:
+            # Standard DAv2 doesn't have max_depth
+            model = DepthAnythingV2(
+                encoder=config["encoder"],
+                features=config["features"],
+                out_channels=config["out_channels"],
+            )
         
         # Load weights
         model_dict = torch.load(model_path, map_location=device, weights_only=False)
