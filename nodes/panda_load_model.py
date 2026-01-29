@@ -56,9 +56,11 @@ class DepthAnythingWrapper(nn.Module):
         self.max_depth = max_depth
     
     def forward(self, x):
-        if self.needs_max_depth_forward:
+        # Always try with max_depth first (metric depth variant)
+        try:
             return self.model(x, self.max_depth)
-        else:
+        except TypeError:
+            # Standard DAv2 doesn't need max_depth
             return self.model(x)
 
 
