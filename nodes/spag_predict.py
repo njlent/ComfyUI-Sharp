@@ -85,6 +85,13 @@ class SPAGPredict:
                     "step": 0.01,
                     "tooltip": "Vertical coordinate threshold (0-1) for ceiling flattening."
                 }),
+                "pole_height": ("FLOAT", {
+                    "default": 0.0,
+                    "min": 0.0,
+                    "max": 50.0,
+                    "step": 0.1,
+                    "tooltip": "Manual height for floor/ceiling from center. 0 = auto-detect from depth. Increase if poles look too small."
+                }),
                 "output_prefix": ("STRING", {
                     "default": "spag_360",
                     "tooltip": "Prefix for output PLY filename or folder name."
@@ -114,6 +121,7 @@ class SPAGPredict:
         use_pole_reconstruction: bool = True,
         floor_threshold: float = 0.85,
         ceiling_threshold: float = 0.15,
+        pole_height: float = 0.0,
         output_prefix: str = "spag_360",
     ):
         predictor = model["predictor"]
@@ -260,18 +268,36 @@ class SPAGPredict:
                 is_floor = v > floor_threshold
                 is_ceiling = v < ceiling_threshold
                 
-                floor_indices = torch.where(v > floor_threshold)
+                # Determine target heights
+                if pole_height > 0:
+                    # Use manual height (negative for floor since Y is flipped)
+                    floor_y_target = -pole_height
+                    ceiling_y_target = pole_height
+                else:
+                    # Auto-detect from wall region (middle 50% vertically)
+                    wall_mask = (v > 0.25) & (v < 0.75)
+                    if wall_mask.any():
+                        wall_distance = torch.norm(positions[wall_mask], dim=-1)
+                        avg_wall_dist = torch.median(wall_distance)
+                    else:
+                        avg_wall_dist = torch.median(depth_per_pixel)
+                    
+                    # Use wall distance as reference for pole height
+                    floor_y_target = -avg_wall_dist * 0.5  # Half the wall distance
+                    ceiling_y_target = avg_wall_dist * 0.5
+                
+                # Apply floor flattening
+                floor_indices = torch.where(is_floor)
                 if len(floor_indices[0]) > 0:
-                     current_y = positions[..., 1]
-                     floor_y_target = torch.quantile(current_y[is_floor], 0.5)
-                     t_floor = floor_y_target / (directions[..., 1] + 1e-6)
-                     positions[is_floor] = directions[is_floor] * t_floor[is_floor].unsqueeze(-1)
+                    # Calculate t such that direction * t gives Y = floor_y_target
+                    t_floor = floor_y_target / (directions[..., 1] + 1e-6)
+                    positions[is_floor] = directions[is_floor] * t_floor[is_floor].unsqueeze(-1)
                      
-                ceiling_indices = torch.where(v < ceiling_threshold)
+                # Apply ceiling flattening
+                ceiling_indices = torch.where(is_ceiling)
                 if len(ceiling_indices[0]) > 0:
-                     ceiling_y_target = torch.quantile(positions[..., 1][is_ceiling], 0.5)
-                     t_ceil = ceiling_y_target / (directions[..., 1] + 1e-6)
-                     positions[is_ceiling] = directions[is_ceiling] * t_ceil[is_ceiling].unsqueeze(-1)
+                    t_ceil = ceiling_y_target / (directions[..., 1] + 1e-6)
+                    positions[is_ceiling] = directions[is_ceiling] * t_ceil[is_ceiling].unsqueeze(-1)
 
             # 6. Scaling
             scale_factors = latitude_scale_factor(phi, base_scale=base_scale) # [H, W]
