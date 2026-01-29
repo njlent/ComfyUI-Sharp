@@ -175,7 +175,18 @@ class SPAGPredict:
                 gaussians_metric = local_unproject(gaussians_ndc, torch.eye(4).to(device), intrinsics_resized, internal_shape)
                 
                 # Extract depth
-                depth_t = gaussians_metric.mean_vectors[0, :, 2].reshape(1, internal_shape[1], internal_shape[0])
+                # SHARP output might be different resolution than input internal_shape
+                num_gaussians = gaussians_metric.mean_vectors.shape[1]
+                W_int = internal_shape[0]
+                H_int = num_gaussians // W_int
+                
+                if num_gaussians != W_int * H_int:
+                     print(f"[SPAG] Warning: Number of gaussians {num_gaussians} is not divisible by internal width {W_int}. Choosing sqrt.")
+                     S = int(np.sqrt(num_gaussians))
+                     W_int = S
+                     H_int = S
+
+                depth_t = gaussians_metric.mean_vectors[0, :, 2].reshape(1, H_int, W_int)
                 depth_t = F.interpolate(depth_t.unsqueeze(1), size=(height, width), mode='bilinear').squeeze(1) # [1, H, W]
                 
                 H, W = height, width
