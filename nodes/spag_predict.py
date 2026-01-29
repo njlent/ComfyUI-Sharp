@@ -276,3 +276,12 @@ def local_unproject(gaussians_ndc, extrinsics, intrinsics, image_shape):
     unprojection_matrix = get_unprojection_matrix(extrinsics, intrinsics, image_shape)
     gaussians = apply_transform(gaussians_ndc, unprojection_matrix[:3])
     return gaussians
+
+
+NODE_CLASS_MAPPINGS = {
+    "SPAGPredict": SPAGPredict,
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "SPAGPredict": "SPAG Predict (360)",
+}
