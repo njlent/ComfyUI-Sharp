@@ -46,6 +46,22 @@ MODEL_CONFIGS = {
 HF_REPO_ID = "ZidongC/PanDA"
 
 
+class DepthAnythingWrapper(nn.Module):
+    """Wrapper to handle different DepthAnythingV2 API versions."""
+    
+    def __init__(self, model, needs_max_depth_forward=False, max_depth=1.0):
+        super().__init__()
+        self.model = model
+        self.needs_max_depth_forward = needs_max_depth_forward
+        self.max_depth = max_depth
+    
+    def forward(self, x):
+        if self.needs_max_depth_forward:
+            return self.model(x, self.max_depth)
+        else:
+            return self.model(x)
+
+
 class LoadPanDAModel:
     """Load PanDA model for 360 depth estimation."""
 
@@ -115,18 +131,22 @@ class LoadPanDAModel:
                 "pip install git+https://github.com/DepthAnything/Depth-Anything-V2.git"
             )
         
-        # Create model - try with and without max_depth parameter
+        # Create model - detect API version
         print(f"[PanDA] Loading {model_size} model...")
+        needs_max_depth_forward = False
+        
         try:
-            # Metric depth variant has max_depth
+            # Try metric depth variant (has max_depth in __init__)
             model = DepthAnythingV2(
                 encoder=config["encoder"],
                 features=config["features"],
                 out_channels=config["out_channels"],
                 max_depth=1.0,
             )
+            # If init succeeded with max_depth, forward likely needs it too
+            needs_max_depth_forward = True
         except TypeError:
-            # Standard DAv2 doesn't have max_depth
+            # Standard DAv2 doesn't have max_depth in init
             model = DepthAnythingV2(
                 encoder=config["encoder"],
                 features=config["features"],
@@ -148,10 +168,15 @@ class LoadPanDAModel:
         model.to(device)
         model.eval()
         
-        print(f"[PanDA] Model loaded successfully on {device}")
+        # Wrap model to handle forward() API differences
+        wrapped_model = DepthAnythingWrapper(model, needs_max_depth_forward=needs_max_depth_forward)
+        wrapped_model.to(device)
+        wrapped_model.eval()
+        
+        print(f"[PanDA] Model loaded successfully on {device} (max_depth_forward={needs_max_depth_forward})")
         
         return ({
-            "model": model,
+            "model": wrapped_model,
             "device": device,
             "config": config,
             "model_size": model_size,
@@ -165,3 +190,4 @@ NODE_CLASS_MAPPINGS = {
 NODE_DISPLAY_NAME_MAPPINGS = {
     "LoadPanDAModel": "Load PanDA Model (360 Depth)",
 }
+
