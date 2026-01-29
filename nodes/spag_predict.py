@@ -56,6 +56,10 @@ class SPAGPredict:
                     "default": False,
                     "tooltip": "Flip the image horizontally (mirror)."
                 }),
+                "flip_y": ("BOOLEAN", {
+                    "default": True,
+                    "tooltip": "Flip vertical axis. Enable (default) if floor/ceiling appear swapped."
+                }),
                 "base_scale": ("FLOAT", {
                     "default": 0.01,
                     "min": 0.001,
@@ -105,6 +109,7 @@ class SPAGPredict:
         depth_offset: float = 0.0,
         invert_depth: bool = False,
         flip_x: bool = False,
+        flip_y: bool = True,
         base_scale: float = 0.01,
         use_pole_reconstruction: bool = True,
         floor_threshold: float = 0.85,
@@ -241,6 +246,10 @@ class SPAGPredict:
             
             # 3. Direction vectors (Unit sphere)
             directions = spherical_to_direction(theta, phi) # [H, W, 3]
+            
+            # Flip Y if requested (swaps floor/ceiling)
+            if flip_y:
+                directions[..., 1] = -directions[..., 1]
             
             # 4. Positions = Depth * Direction
             depth_per_pixel = depth_t.squeeze(0) # [H, W]
